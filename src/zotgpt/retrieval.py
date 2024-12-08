@@ -30,14 +30,6 @@ class VectorStoreManager:
                 "Invalid store type. Choose 'chromadb' or 'pineconevectorstore'."
             )
 
-    def add_documents(self, docs: list):
-        """Add documents to the vector store."""
-        if (
-            self.store_type == "chromadb"
-            or self.store_type == "pineconevectorstore"
-        ):
-            self.vectorstore.add_documents(docs)
-
     def retrieve_documents(self, query: str, filter: dict = None):
         """Retrieve documents based on a query and optional filter."""
         if filter:

@@ -21,11 +21,13 @@ if __name__ == "__main__":
     pdf_items = get_pdf_items_from_collection_key(zot, collection_key)
     pdf_zot_items = [ZoteroItem(zot, item) for item in pdf_items]
 
+    for idx, x in enumerate(pdf_zot_items):
+        print(f"{idx=} | {x.key} | {x.get_title()}\n")
+        # if x.parent_item_title == "" or x.parent_item_title is None:
+        #     print(f"ERROR : {x.key} | {x.get_url()}\n")
+
     creators_work = {}
     for idx, x in enumerate(pdf_zot_items):
-        # print(
-        #     f"{idx=} | {x.key} | {x.parent_item_title} | {x.get_creators()}\n"
-        # )
         for creator in x.get_creators():
             if creator not in creators_work:
                 creators_work[creator] = {}
@@ -44,7 +46,8 @@ if __name__ == "__main__":
     item.get_pdf_path()
 
     item_key = "446PVAFU"
-    item_key = "A9SMID9U"
-    item_key = "PL2CQX9B"
+    item_key = "VZVATVKP"
+    item_key = "ZRPTUR3W"
+    item_key = "22TS3QH8"
     pdf_item = get_pdf_item_from_item_key(zot, item_key)
     pot = ZoteroItem(zot, pdf_item)

@@ -78,6 +78,9 @@ class ZoteroItem:
     def get_tags(self) -> list:
         return [tag.get("tag") for tag in self.parent_item_tags]
 
+    def get_title(self) -> str:
+        return self.parent_item_title if self.parent_item_title else self.title
+
     def get_url(self) -> str:
         return self.url if self.url else self.parent_item_url
 
@@ -184,7 +187,7 @@ def get_pdf_items_from_collection_key(
     while True:
         # Retrieve items from the collection
         print(
-            f"{iteration=} - querying {collection_key=} items w/ pagination - {start=}-{start + limit=}"
+            f"{iteration=} - querying {collection_key=} items w/ pagination : {start=} - end {start + limit}"
         )
         items = zotero_client.collection_items(
             collection_key, start=start, limit=limit

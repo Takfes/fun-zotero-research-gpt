@@ -2,7 +2,6 @@ import os
 import re
 import textwrap
 from ast import mod
-from typing import Optional, Union
 
 from dotenv import load_dotenv
 from langchain import hub
@@ -22,7 +21,8 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from pyprojroot import here
 
-from zotgpt.embed import Embeddings
+from zotgpt.embed import EmbeddingsFactory
+from zotgpt.storage import VectorStoreFactory
 from zotgpt.zotero import (
     ZoteroItem,
     get_pdf_item_from_item_key,
@@ -33,101 +33,30 @@ from zotgpt.zotero import (
 load_dotenv()
 
 
-# class Plumber:
-#     def __init__(
-#         self,
-#         embeddings_type: str = "cohere",
-#         vector_store_type: str = "chromadb",
-#         db_path: Optional[str] = None,
-#     ):
-#         self.chunk_size: int = 1000
-#         self.chunk_overlap: int = 200
-#         self.embeddings: Union[OpenAIEmbeddings, CohereEmbeddings] = (
-#             self._create_embeddings(embeddings_type)
-#         )
-#         self.vector_store: Union[PineconeVectorStore, Chroma] = (
-#             self._create_vector_store(vector_store_type, db_path)
-#         )
-
-#     def _create_embeddings(
-#         self, embeddings_type: str
-#     ) -> Union[OpenAIEmbeddings, CohereEmbeddings]:
-#         if embeddings_type == "openai":
-#             return OpenAIEmbeddings()
-#         elif embeddings_type == "cohere":
-#             return CohereEmbeddings()
-#         else:
-#             raise ValueError(f"Unsupported embeddings type: {embeddings_type}")
-
-#     def _create_vector_store(
-#         self, vector_store_type: str, db_path: Optional[str]
-#     ) -> Union[PineconeVectorStore, Chroma]:
-#         if vector_store_type == "pinecone":
-#             return PineconeVectorStore()
-#         elif vector_store_type == "chromadb":
-#             if db_path is None:
-#                 raise ValueError(
-#                     "A database path must be provided for ChromaDB"
-#                 )
-#             return Chroma(db_path=db_path)
-#         else:
-#             raise ValueError(
-#                 f"Unsupported vector store type: {vector_store_type}"
-#             )
-
-#     def load_from_path(
-#         self, pdf_paths: Union[str, list[str]], reference: str
-#     ) -> list:
-#         if isinstance(pdf_paths, str):
-#             pdf_paths = [pdf_paths]
-
-#         all_documents_splitted = []
-
-#         for pdf_path in pdf_paths:
-#             # load documents
-#             loader = PyPDFLoader(pdf_path)
-#             documents_loaded = loader.load()
-
-#             # split documents into chunks
-#             text_splitter = RecursiveCharacterTextSplitter(
-#                 chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap
-#             )
-#             documents_splitted = text_splitter.split_documents(documents_loaded)
-
-#             # update metadata
-#             for doc in documents_splitted:
-#                 doc.metadata.update({"source": reference})
-
-#             all_documents_splitted.extend(documents_splitted)
-
-#         return all_documents_splitted
-
-#     def retrieve_data(self, query):
-#         # Implement data retrieval logic here
-#         pass
-
-
 if __name__ == "__main__":
     # Load an example document
     zot = make_zotero_client()
+
+    item_key = "RP5LBBBC"
     item_key = "446PVAFU"
     item_key = "VZVATVKP"
     item_key = "ZRPTUR3W"
     item_key = "22TS3QH8"
+    item_key = "V4JYPRNW"
     pdf_item = get_pdf_item_from_item_key(zot, item_key)
     pot = ZoteroItem(zot, pdf_item)
-    pdf_path = pot.get_pdf_path()
-    # pot_source = {
-    #     "title": pot.parent_item_title,
-    #     "url": pot.get_url(),
-    # }
+
+    pot.key
+    pot.get_title()
+    pot.get_url()
 
     # ==============================================================
     # Storing Section
     # ==============================================================
 
     # Doing process manually
-    loader = PyPDFLoader(pdf_path)
+    # loader = PyPDFLoader(pot.get_url())
+    loader = PyPDFLoader(pot.get_pdf_path())
     documents_loaded = loader.load()
 
     # Splitting text into chunks
@@ -141,6 +70,7 @@ if __name__ == "__main__":
     for doc in documents_splitted:
         doc.metadata.update({"source": pot.get_url()})
         doc.metadata.update({"id": pot.key})
+        doc.metadata.update({"title": pot.get_title()})
         # doc.metadata.update({"source": pot_source})
         # print(doc.metadata)
 
@@ -156,9 +86,17 @@ if __name__ == "__main__":
         cohere_api_key=os.environ["COHERE_API_KEY"], model="embed-english-v3.0"
     )
 
-    embeddings = Embeddings(
-        embeddings_type="cohere", embeddings_model="embed-english-v3.0"
-    )
+    # Define Embeddings from EmbeddingsFactory
+    # Method 1: Using __call__
+    ef = EmbeddingsFactory("openai", "text-embedding-ada-002")
+    print(ef.embeddings_type, ef.embeddings_model, ef.dimension)
+    embeddings = ef.create()  # or directly calling ef()
+    embeddings = EmbeddingsFactory("openai", "text-embedding-ada-002")()
+
+    embeddings = EmbeddingsFactory("cohere", "embed-english-v3.0")()
+
+    vector = embeddings.embed_query(doc.page_content)
+    len(vector)
 
     # Define Pinecone vectorstore
     vector_store = PineconeVectorStore.from_documents(
@@ -180,6 +118,32 @@ if __name__ == "__main__":
     )
 
     # ==============================================================
+    # ==============================================================
+    # ==============================================================
+
+    persist_directory = here("./data/chroma_db").__str__()
+    # persist_directory = "../../data/chroma_db"
+    collection_name = "fun-zotero-research-gpt"
+
+    vector_store_factory = VectorStoreFactory(
+        store_type="chroma",
+        embeddings=embeddings,  # Pass embeddings instance
+        collection_name=collection_name,
+        persist_directory=persist_directory,
+    )
+
+    vector_store = vector_store_factory.create()  # or vector_store_factory()
+
+    vector_store.from_documents(
+        documents=documents_splitted,
+        embedding=embeddings,
+        index_name=collection_name,
+    )
+
+    vector_store.add_documents(documents_splitted)
+    len(documents_splitted)
+
+    # ==============================================================
     # Retrieval Section
     # ==============================================================
 
@@ -198,7 +162,7 @@ if __name__ == "__main__":
         retriever=vector_store.as_retriever(
             search_kwargs={
                 "k": 5,
-                "filter": {"id": {"$in": ["22TS3QH8", "ZRPTUR3W"]}},
+                "filter": {"id": {"$in": ["V4JYPRNW"]}},
             }
         ),
         combine_docs_chain=stuff_documents_chain,
@@ -213,6 +177,7 @@ if __name__ == "__main__":
         x.metadata["source"] + " page " + str(x.metadata["page"])
         for x in result["context"]
     ]
+    references = list(set(references))
 
     print(wrapped_answer)
     print()
