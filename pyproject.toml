@@ -35,6 +35,7 @@ dependencies = [
     "chromadb>=0.5.23",
     "langchain-cohere>=0.3.3",
     "pyprojroot>=0.3.0",
+    "langchain-chroma>=0.1.4",
 ]
 
 [project.urls]
@@ -125,6 +126,8 @@ ignore = [
     "E731",
     # Ignore unused import warnings
     "F401",
+    # Ignore long messages outside the exception class warning
+    "TRY003",
 ]
 
 [tool.ruff.lint.per-file-ignores]

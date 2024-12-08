@@ -1,27 +1,31 @@
 import os
 import re
+import textwrap
 from ast import mod
-from typing import Union
+from typing import Optional, Union
 
 from dotenv import load_dotenv
 from langchain import hub
-from langchain.chains import VectorDBQA
+
+# from langchain.chains import VectorDBQA
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain.document_loaders import PyPDFLoader
-from langchain.embeddings import OpenAIEmbeddings  # , CohereEmbeddings
+
+# from langchain.embeddings import OpenAIEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import Chroma
+
+# from langchain.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_cohere import CohereEmbeddings
-from langchain_openai import ChatOpenAI
-from langchain_pinecone import Pinecone, PineconeVectorStore
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_pinecone import PineconeVectorStore
 from pyprojroot import here
 
+from zotgpt.embed import Embeddings
 from zotgpt.zotero import (
     ZoteroItem,
-    collection_constructor,
     get_pdf_item_from_item_key,
-    get_pdf_items_from_collection_key,
     make_zotero_client,
 )
 
@@ -29,52 +33,87 @@ from zotgpt.zotero import (
 load_dotenv()
 
 
-class Plumber:
-    def __init__(self):
-        self.chunk_size: int = 1000
-        self.chunk_overlap: int = 200
-        self.reference_sources: str = None
-        self._embeddings: str = "cohere"
-        self.embeddings: Union[OpenAIEmbeddings, CohereEmbeddings] = None
-        self._vector_store: str = "chromadb"
-        self.vector_store = Union[PineconeVectorStore, Chroma]
+# class Plumber:
+#     def __init__(
+#         self,
+#         embeddings_type: str = "cohere",
+#         vector_store_type: str = "chromadb",
+#         db_path: Optional[str] = None,
+#     ):
+#         self.chunk_size: int = 1000
+#         self.chunk_overlap: int = 200
+#         self.embeddings: Union[OpenAIEmbeddings, CohereEmbeddings] = (
+#             self._create_embeddings(embeddings_type)
+#         )
+#         self.vector_store: Union[PineconeVectorStore, Chroma] = (
+#             self._create_vector_store(vector_store_type, db_path)
+#         )
 
-    def prepare_pdf(pdf_path: str):
-        # load documents
-        loader = PyPDFLoader(pdf_path)
-        documents_loaded = loader.load()
+#     def _create_embeddings(
+#         self, embeddings_type: str
+#     ) -> Union[OpenAIEmbeddings, CohereEmbeddings]:
+#         if embeddings_type == "openai":
+#             return OpenAIEmbeddings()
+#         elif embeddings_type == "cohere":
+#             return CohereEmbeddings()
+#         else:
+#             raise ValueError(f"Unsupported embeddings type: {embeddings_type}")
 
-        # split documents into chunks
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000, chunk_overlap=200
-        )
-        documents_splitted = text_splitter.split_documents(documents_loaded)
+#     def _create_vector_store(
+#         self, vector_store_type: str, db_path: Optional[str]
+#     ) -> Union[PineconeVectorStore, Chroma]:
+#         if vector_store_type == "pinecone":
+#             return PineconeVectorStore()
+#         elif vector_store_type == "chromadb":
+#             if db_path is None:
+#                 raise ValueError(
+#                     "A database path must be provided for ChromaDB"
+#                 )
+#             return Chroma(db_path=db_path)
+#         else:
+#             raise ValueError(
+#                 f"Unsupported vector store type: {vector_store_type}"
+#             )
 
-        # update metadata
-        for doc in documents_splitted:
-            doc.metadata.update({"source": pot.parent_item_title})
+#     def load_from_path(
+#         self, pdf_paths: Union[str, list[str]], reference: str
+#     ) -> list:
+#         if isinstance(pdf_paths, str):
+#             pdf_paths = [pdf_paths]
 
-    def make_embeddings(
-        model: str = "openai",
-    ) -> Union[OpenAIEmbeddings, CohereEmbeddings]:
-        if model == "openai":
-            return OpenAIEmbeddings(openai_api_key=os.environ["OPENAI_API_KEY"])
-        elif model == "cohere":
-            return CohereEmbeddings(model="embed-english-v3.0")
+#         all_documents_splitted = []
 
-    def make_vectorstore(
-        model: str = "pinecone",
-    ):
-        if model == "pinecone":
-            return PineconeVectorStore
-        elif model == "chromadb":
-            return CohereEmbeddings(model="embed-english-v3.0")
+#         for pdf_path in pdf_paths:
+#             # load documents
+#             loader = PyPDFLoader(pdf_path)
+#             documents_loaded = loader.load()
+
+#             # split documents into chunks
+#             text_splitter = RecursiveCharacterTextSplitter(
+#                 chunk_size=self.chunk_size, chunk_overlap=self.chunk_overlap
+#             )
+#             documents_splitted = text_splitter.split_documents(documents_loaded)
+
+#             # update metadata
+#             for doc in documents_splitted:
+#                 doc.metadata.update({"source": reference})
+
+#             all_documents_splitted.extend(documents_splitted)
+
+#         return all_documents_splitted
+
+#     def retrieve_data(self, query):
+#         # Implement data retrieval logic here
+#         pass
 
 
 if __name__ == "__main__":
     # Load an example document
     zot = make_zotero_client()
     item_key = "446PVAFU"
+    item_key = "VZVATVKP"
+    item_key = "ZRPTUR3W"
+    item_key = "22TS3QH8"
     pdf_item = get_pdf_item_from_item_key(zot, item_key)
     pot = ZoteroItem(zot, pdf_item)
     pdf_path = pot.get_pdf_path()
@@ -100,24 +139,34 @@ if __name__ == "__main__":
 
     # Update metadata
     for doc in documents_splitted:
-        doc.metadata.update({"source": pot.parent_item_title})
+        doc.metadata.update({"source": pot.get_url()})
+        doc.metadata.update({"id": pot.key})
         # doc.metadata.update({"source": pot_source})
         # print(doc.metadata)
 
     # Define the OpenAI embedding model
-    embeddings = OpenAIEmbeddings(openai_api_key=os.environ["OPENAI_API_KEY"])
+    embeddings = OpenAIEmbeddings(
+        openai_api_key=os.environ["OPENAI_API_KEY"],
+        model="text-embedding-ada-002",
+    )
+
+    # Define the Cohere embedding model
+    # https://docs.cohere.com/v2/docs/embed-on-langchain
+    embeddings = CohereEmbeddings(
+        cohere_api_key=os.environ["COHERE_API_KEY"], model="embed-english-v3.0"
+    )
+
+    embeddings = Embeddings(
+        embeddings_type="cohere", embeddings_model="embed-english-v3.0"
+    )
 
     # Define Pinecone vectorstore
     vector_store = PineconeVectorStore.from_documents(
         documents_splitted,
         embeddings,
         index_name=os.environ["PINECONE_INDEX_NAME"],
-        upsert=True,  # This will add new documents to the existing index
+        # upsert=True,  # This will add new documents to the existing index
     )
-
-    # Define the Cohere embedding model
-    # https://docs.cohere.com/v2/docs/embed-on-langchain
-    embeddings = CohereEmbeddings(model="embed-english-v3.0")
 
     # Define Chroma vectorstore
     # https://github.com/hwchase17/chroma-langchain/blob/master/persistent-qa.ipynb
@@ -145,22 +194,27 @@ if __name__ == "__main__":
         combine_docs_chain=stuff_documents_chain,
     )
 
-    query = "Can you explain the main concepts relative to Simulation-guided Beam Search for Neural Combinatorial Optimization?"
+    qa = create_retrieval_chain(
+        retriever=vector_store.as_retriever(
+            search_kwargs={
+                "k": 5,
+                "filter": {"id": {"$in": ["22TS3QH8", "ZRPTUR3W"]}},
+            }
+        ),
+        combine_docs_chain=stuff_documents_chain,
+    )
+
+    # query = "Can you explain the main concepts relative to Simulation-guided Beam Search for Neural Combinatorial Optimization?"
+    query = "What do you know about RL in optimization?"
     result = qa.invoke(input={"input": query})
 
-    result["answer"]
+    wrapped_answer = textwrap.fill(result["answer"], width=80)
     references = [
         x.metadata["source"] + " page " + str(x.metadata["page"])
         for x in result["context"]
     ]
 
-    """
-    Simulation-guided Beam Search (SGBS) is a technique proposed for Neural Combinatorial Optimization (CO) that combines Monte Carlo Tree Search (MCTS) with beam search. The goal of SGBS is to enable neural CO methods to effectively search for high-quality solutions to CO problems.
-    \n\nSGBS works by performing rollouts for nodes identified as promising by a neural network, which acts as a mechanism to correct any incorrect decisions made by the network. Only a select number of promising nodes identified by the rollouts are expanded, and this process is repeated. 
-    \n\nThe implementation of SGBS is straightforward and requires minimal modification from existing neural CO algorithms. It maintains high throughput efficiency, characteristic of neural network-based sampling, as it does not involve complicated backpropagation that would hinder batch parallelization of the search.
-    \n\nAdditionally, SGBS can be combined with efficient active search (EAS) to achieve even better performance over longer time spans. EAS updates a small subset of model parameters at test time to improve the quality of solutions backpropagated in SGBS, while SGBS enhances the quality of the policy used in EAS.
-    \n\nThe experiments conducted with SGBS on various CO problem settings, such as the Traveling Salesman Problem (TSP), Capacitated Vehicle Routing Problem (CVRP), and Flexible Flow Shop Problem (FFSP), have shown promising results. 
-    The combination of SGBS with EAS has reduced the gap between neural CO methods and state-of-the-art handcrafted heuristics, and in some cases, outperformed methods that were considered state-of-the-art just a few years ago.
-    \n\nIn conclusion, SGBS provides a powerful search procedure for neural CO approaches, allowing them to find high-quality solutions efficiently. 
-    The integration of SGBS with EAS further enhances performance by sharing information about finding solutions. Future work includes dynamically setting the parameters of SGBS and exploring deeper integration with EAS.
-    """
+    print(wrapped_answer)
+    print()
+    for ref in references:
+        print(ref)
