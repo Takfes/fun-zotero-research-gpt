@@ -648,6 +648,7 @@ dependencies = [
     { name = "pyzotero" },
     { name = "streamlit" },
     { name = "streamlit-chat" },
+    { name = "tqdm" },
 ]
 
 [package.dev-dependencies]
@@ -683,6 +684,7 @@ requires-dist = [
     { name = "pyzotero", specifier = ">=1.5.28" },
     { name = "streamlit", specifier = ">=1.40.2" },
     { name = "streamlit-chat", specifier = ">=0.1.1" },
+    { name = "tqdm", specifier = ">=4.67.1" },
 ]
 
 [package.metadata.requires-dev]
