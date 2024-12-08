@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     r = Retriever(vector_store=vs)
     query = """
-    What's the Decision Transformer in the context of Optimization and RL?
+    What do you know about Decision Transformer in the context of Optimization and Reinforcement Learning?
     """
-    response = r.retrieve(query)
-    format_answer(response)
+    response = r.retrieve(query, chat_history=[])
+    format_answer(response, wrap_text=True, unique_references=True)
