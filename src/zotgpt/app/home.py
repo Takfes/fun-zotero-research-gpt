@@ -1,12 +1,8 @@
 import streamlit as st
 
-st.set_page_config(
-    page_title="Your App Title",
-    page_icon="🧊",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+from zotgpt.app.utils import initialize
 
+initialize()
 st.header("ZotGPT: powered by LangChain🦜🔗")
 
 st.subheader("Home")
