@@ -49,18 +49,19 @@ wheels = [
 
 [[package]]
 name = "altair"
-version = "5.5.0"
+version = "4.2.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "entrypoints" },
     { name = "jinja2" },
     { name = "jsonschema" },
-    { name = "narwhals" },
-    { name = "packaging" },
-    { name = "typing-extensions", marker = "python_full_version < '3.14'" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "toolz" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/16/b1/f2969c7bdb8ad8bbdda031687defdce2c19afba2aa2c8e1d2a17f78376d8/altair-5.5.0.tar.gz", hash = "sha256:d960ebe6178c56de3855a68c47b516be38640b73fb3b5111c2a9ca90546dd73d", size = 705305 }
+sdist = { url = "https://files.pythonhosted.org/packages/ec/bf/781b607da4c1a2a7211cd570bd7e22e0accd4deaf1074c32ac7344a09339/altair-4.2.2.tar.gz", hash = "sha256:39399a267c49b30d102c10411e67ab26374156a84b1aeb9fcd15140429ba49c5", size = 740430 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/aa/f3/0b6ced594e51cc95d8c1fc1640d3623770d01e4969d29c0bd09945fafefa/altair-5.5.0-py3-none-any.whl", hash = "sha256:91a310b926508d560fe0148d02a194f38b824122641ef528113d029fcd129f8c", size = 731200 },
+    { url = "https://files.pythonhosted.org/packages/18/62/47452306e84d4d2e67f9c559380aeb230f5e6ca84fafb428dd36b96a99ba/altair-4.2.2-py3-none-any.whl", hash = "sha256:8b45ebeaf8557f2d760c5c77b79f02ae12aee7c46c27c06014febab6f849bc87", size = 813630 },
 ]
 
 [[package]]
@@ -510,6 +511,15 @@ wheels = [
 ]
 
 [[package]]
+name = "entrypoints"
+version = "0.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ea/8d/a7121ffe5f402dc015277d2d31eb82d2187334503a011c18f2e78ecbb9b2/entrypoints-0.4.tar.gz", hash = "sha256:b706eddaa9218a19ebcd67b56818f05bb27589b1ca9e8d797b74affad4ccacd4", size = 13974 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/35/a8/365059bbcd4572cbc41de17fd5b682be5868b218c3c5479071865cab9078/entrypoints-0.4-py3-none-any.whl", hash = "sha256:f174b5ff827504fd3cd97cc3f8649f3693f51538c7e4bdf3ef002c8429d42f9f", size = 5294 },
+]
+
+[[package]]
 name = "executing"
 version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -647,6 +657,7 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "pyzotero" },
     { name = "streamlit" },
+    { name = "streamlit-aggrid" },
     { name = "streamlit-chat" },
     { name = "tqdm" },
 ]
@@ -683,6 +694,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "pyzotero", specifier = ">=1.5.28" },
     { name = "streamlit", specifier = ">=1.40.2" },
+    { name = "streamlit-aggrid", specifier = ">=1.0.5" },
     { name = "streamlit-chat", specifier = ">=0.1.1" },
     { name = "tqdm", specifier = ">=4.67.1" },
 ]
@@ -1724,15 +1736,6 @@ wheels = [
 ]
 
 [[package]]
-name = "narwhals"
-version = "1.15.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e3/21/f1cbabea167eacdb04e4d52083976f2ade516d891993aade5a6ed065f7fa/narwhals-1.15.2.tar.gz", hash = "sha256:bf32c4afc3b4e562be51d50a3ff4fcacd1e0c1d89dc4da1b818af81d7c28e0c7", size = 199294 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/e7/fe3d69098e628e81cf317e860474e5df02a5a681b031acbf2aaf192cef3f/narwhals-1.15.2-py3-none-any.whl", hash = "sha256:00d16ed1c4466b43ba37ef6799142340981e4ac7dcd7686e461d4955abcd921d", size = 233774 },
-]
-
-[[package]]
 name = "nest-asyncio"
 version = "1.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2580,6 +2583,15 @@ wheels = [
 ]
 
 [[package]]
+name = "python-decouple"
+version = "3.8"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e1/97/373dcd5844ec0ea5893e13c39a2c67e7537987ad8de3842fe078db4582fa/python-decouple-3.8.tar.gz", hash = "sha256:ba6e2657d4f376ecc46f77a3a615e058d93ba5e465c01bbe57289bfb7cce680f", size = 9612 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a2/d4/9193206c4563ec771faf2ccf54815ca7918529fe81f6adb22ee6d0e06622/python_decouple-3.8-py3-none-any.whl", hash = "sha256:d0d45340815b25f4de59c974b855bb38d03151d81b037d9e3f463b0c9f8cbd66", size = 9947 },
+]
+
+[[package]]
 name = "python-dotenv"
 version = "1.0.1"
 source = { registry = "https://pypi.org/simple" }
@@ -3023,6 +3035,21 @@ wheels = [
 ]
 
 [[package]]
+name = "streamlit-aggrid"
+version = "1.0.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "altair" },
+    { name = "pandas" },
+    { name = "python-decouple" },
+    { name = "streamlit" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9c/6a/1d400578115fea4b8926fe60566d54399409baadaf448ed0bc07e0130312/streamlit_aggrid-1.0.5.tar.gz", hash = "sha256:12e17f88d66e110e5d68504614a4b933f7dca31e40448396252d889a10e761b6", size = 7819216 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6f/49/892f841d7eb689fb67d83c310c1846423bb14c7fc9976b83b0d0ede1ed24/streamlit_aggrid-1.0.5-py3-none-any.whl", hash = "sha256:ac0a58c1d39418d139da5623c4c8a0a3aa86463c217a41c837e2ef52c8537a34", size = 7903624 },
+]
+
+[[package]]
 name = "streamlit-chat"
 version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -3130,6 +3157,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/be/ba/1f744cdc819428fc6b5084ec34d9b30660f6f9daaf70eead706e3203ec3c/toml-0.10.2.tar.gz", hash = "sha256:b3bda1d108d5dd99f4a20d24d9c348e91c4db7ab1b749200bded2f839ccbe68f", size = 22253 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b", size = 16588 },
+]
+
+[[package]]
+name = "toolz"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8a/0b/d80dfa675bf592f636d1ea0b835eab4ec8df6e9415d8cfd766df54456123/toolz-1.0.0.tar.gz", hash = "sha256:2c86e3d9a04798ac556793bced838816296a2f085017664e4995cb40a1047a02", size = 66790 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl", hash = "sha256:292c8f1c4e7516bf9086f8850935c799a874039c8bcf959d47b600e4c44a6236", size = 56383 },
 ]
 
 [[package]]

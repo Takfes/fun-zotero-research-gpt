@@ -1,20 +1,15 @@
 import streamlit as st
 
-from zotgpt.app.utils import (
-    initialize_embeddings_and_vector_store,
-    initialize_zotero_client,
-)
-from zotgpt.zotero import collection_constructor, make_zotero_client
+from zotgpt.app.utils import initialize
 
-# Initialize embeddings and vector store only once
-initialize_embeddings_and_vector_store()
+initialize()
 
-# Initialize Zotero client only once
-initialize_zotero_client()
+db = st.session_state["metastore"]
+df = db.read_database()
 
-zot = st.session_state["vector_store"]
+selected_columns = ["key", "title", "tags", "embedded"]
+tags_exclude_notion = [x.pop(x.index("notion")) for x in df["tags"].tolist()]
+df_show = df[selected_columns].copy()
+df_show["tags"] = tags_exclude_notion
 
-collections = collection_constructor(zot)
-
-st.write(collections.get_collection_count())
-st.write(collections.get_collection_dict())
+st.dataframe(df[selected_columns])

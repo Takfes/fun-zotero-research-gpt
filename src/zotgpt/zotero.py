@@ -1,5 +1,4 @@
 import os
-from dataclasses import dataclass, field
 
 from dotenv import load_dotenv
 from pyzotero import zotero
@@ -13,10 +12,78 @@ def make_zotero_client():
     return zotero.Zotero(library_id, library_type, api_key)
 
 
-@dataclass
+class ZoteroWrapper:
+    def __init__(self, zotero_client=None):
+        self.zot = zotero_client
+        self.collections = self.load_collections()
+
+    def load_collections(self) -> None:
+        self.collections = [
+            {
+                "key": col["data"]["key"],
+                "name": col["data"]["name"],
+                "num_items": col["meta"]["numItems"],
+            }
+            for col in self.zot.collections()
+        ]
+        print("Loaded collection zotero client collections")
+        return self.collections
+
+    def get_collections(self) -> list:
+        return self.collections
+
+    def get_pdf_item_from_item_key(self, item_key: str) -> dict:
+        item = self.zot.item(item_key)
+        if (
+            item.get("contentType") == "application/pdf"
+            or item.get("links", {}).get("enclosure", {}).get("type")
+            == "application/pdf"
+            or item.get("attachment", {}).get("attachmentType")
+            == "application/pdf"
+        ):
+            return item
+        else:
+            raise ValueError(f"Item with key {item_key} is not a PDF")
+
+    def get_pdf_items_from_collection_key(self, collection_key: str) -> list:
+        start = 0
+        limit = 100
+        iteration = 1
+        pdf_items = []
+
+        while True:
+            print(
+                f"{iteration=} - querying {collection_key=} items w/ pagination : {start=} - end {start + limit}"
+            )
+            items = self.zot.collection_items(
+                collection_key, start=start, limit=limit
+            )
+            print(f"{iteration=} - retrieved {len(items)} items")
+            iteration += 1
+
+            if not items:
+                print(f"Finished retrieving items from {collection_key}")
+                print(f"Total items retrieved: {len(pdf_items)}")
+                break
+
+            for item in items:
+                if (
+                    item.get("contentType") == "application/pdf"
+                    or item.get("links", {}).get("enclosure", {}).get("type")
+                    == "application/pdf"
+                    or item.get("attachment", {}).get("attachmentType")
+                    == "application/pdf"
+                ):
+                    pdf_items.append(item)
+
+            print(f"end {iteration=} contains {len(pdf_items)} PDF items\n")
+            start += limit
+
+        return pdf_items
+
+
 class ZoteroItem:
-    # TODO: Add ROOT PATH dynamically from the environment
-    __ROOT_PATH__ = "/Users/takis/Zotero/storage"
+    __ROOT_PATH__ = os.environ.get("ZOTERO_PDF_ROOT_PATH", "pdfs")
 
     def __init__(self, zotero_client, item):
         self.zotero_client = zotero_client
@@ -97,135 +164,156 @@ class ZoteroItem:
         return f"ZoteroItem: (Key: {self.key}) (Has_Parent: {self.has_parent}\n(Title: {self.parent_item_title if self.parent_item_title else self.title}))"
 
 
-@dataclass
-class Collection:
-    key: str
-    name: str
-    number_of_items: int
-    parent_collection: str = None
-    items: list[ZoteroItem] = field(default_factory=list)
+# @dataclass
+# class Collection:
+#     key: str
+#     name: str
+#     number_of_items: int
+#     parent_collection: str = None
+#     items: list[ZoteroItem] = field(default_factory=list)
 
-    def add_item(self, item: ZoteroItem) -> None:
-        if not isinstance(item, ZoteroItem):
-            raise TypeError("Only ZoteroItem instances can be added")
-        self.items.append(item)
+#     def add_item(self, item: ZoteroItem) -> None:
+#         if not isinstance(item, ZoteroItem):
+#             raise TypeError("Only ZoteroItem instances can be added")
+#         self.items.append(item)
 
-    def add_items(self, items: list[ZoteroItem]) -> None:
-        if not all(isinstance(item, ZoteroItem) for item in items):
-            raise TypeError("Only ZoteroItem instances can be added")
-        self.items.extend(items)
+#     def add_items(self, items: list[ZoteroItem]) -> None:
+#         if not all(isinstance(item, ZoteroItem) for item in items):
+#             raise TypeError("Only ZoteroItem instances can be added")
+#         self.items.extend(items)
 
-    def get_item_count(self) -> int:
-        return len(self.items)
+#     def get_item_count(self) -> int:
+#         return len(self.items)
 
-    def __repr__(self):
-        return f"Collection(key={self.key!r}, name={self.name!r}, number_of_items={self.number_of_items!r})"
+#     def __repr__(self):
+#         return f"Collection(key={self.key!r}, name={self.name!r}, number_of_items={self.number_of_items!r})"
 
-    def __str__(self):
-        return f"Collection: (Key: {self.key}) (Name: {self.name}) (Number of Items: {self.number_of_items})"
-
-
-@dataclass
-class Collections:
-    collections: list[Collection] = field(default_factory=list)
-
-    def add_collection(self, collection: Collection) -> None:
-        self.collections.append(collection)
-
-    def get_collection_by_name(self, name: str) -> Collection:
-        for collection in self.collections:
-            if collection.name == name:
-                return collection
-        return None
-
-    def get_collection_by_key(self, key: str) -> Collection:
-        for collection in self.collections:
-            if collection.key == key:
-                return collection
-        return None
-
-    def get_collection_count(self) -> int:
-        return len(self.collections)
-
-    def print_collections(self) -> None:
-        for idx, collection in enumerate(self.collections):
-            print(idx, collection)
-
-    def get_collection_dict(self):
-        return {
-            collection.key: collection.name for collection in self.collections
-        }
-
-    def __repr__(self):
-        return f"Collections({self.collections!r})"
-
-    def __str__(self):
-        return f"Collections: {self.collections}"
+#     def __str__(self):
+#         return f"Collection: (Key: {self.key}) (Name: {self.name}) (Number of Items: {self.number_of_items})"
 
 
-def collection_constructor(zotero_client=None):
-    my_collections = Collections()
-    collections = zotero_client.collections()
-    for collection in collections:
-        tmp = Collection(
-            key=collection["data"]["key"],
-            name=collection["data"]["name"],
-            number_of_items=collection["meta"]["numItems"],
-        )
-        my_collections.add_collection(tmp)
-    return my_collections
+# class Collections:
+#     def __init__(self, zotero_client=None):
+#         self.zotero_client = zotero_client
+#         self.collections: list[Collection] = []
+#         self.__post_init__()
+
+#     def __post_init__(self):
+#         if self.zotero_client:
+#             self.from_zotero_client(self.zotero_client)
+
+#     def from_zotero_client(self, zotero_client) -> None:
+#         collections = zotero_client.collections()
+#         for collection in collections:
+#             tmp = Collection(
+#                 key=collection["data"]["key"],
+#                 name=collection["data"]["name"],
+#                 number_of_items=collection["meta"]["numItems"],
+#             )
+#             self.add_collection(tmp)
+#         print(f"Loaded collection zotero client collections")
+
+#     def get_collections(self) -> list[Collection]:
+#         return self.collections
+
+#     def add_collection(self, collection: Collection) -> None:
+#         if not any(col.key == collection.key for col in self.collections):
+#             self.collections.append(collection)
+
+#     def get_collection_by_name(self, name: str) -> Collection:
+#         for collection in self.collections:
+#             if collection.name == name:
+#                 return collection
+#         return None
+
+#     def get_collection_by_key(self, key: str) -> Collection:
+#         for collection in self.collections:
+#             if collection.key == key:
+#                 return collection
+#         return None
+
+#     def get_collection_count(self) -> int:
+#         return len(self.collections)
+
+#     def print_collections(self) -> None:
+#         for idx, collection in enumerate(self.collections):
+#             print(idx, collection)
+
+#     def get_collection_dict(self):
+#         return {
+#             collection.key: collection.name for collection in self.collections
+#         }
+
+#     def __repr__(self):
+#         return f"Collections({self.collections!r})"
+
+#     def __str__(self):
+#         return f"Collections: {self.collections}"
 
 
-def get_pdf_items_from_collection_key(
-    zotero_client, collection_key: str
-) -> list:
-    start = 0
-    limit = 100
-    iteration = 1
-    pdf_items = []
-
-    while True:
-        # Retrieve items from the collection
-        print(
-            f"{iteration=} - querying {collection_key=} items w/ pagination : {start=} - end {start + limit}"
-        )
-        items = zotero_client.collection_items(
-            collection_key, start=start, limit=limit
-        )
-        print(f"{iteration=} - retrieved {len(items)} items")
-        iteration += 1
-
-        if not items:
-            print(f"Finished retrieving items from {collection_key}")
-            print(f"Total items retrieved: {len(pdf_items)}")
-            break
-
-        # Collecting PDF items from the results
-        for item in items:
-            if (
-                # item.get("data", {}).get("itemType") == "attachment"
-                item.get("contentType") == "application/pdf"
-                or item.get("links", {}).get("enclosure", {}).get("type")
-                == "application/pdf"
-                or item.get("attachment", {}).get("attachmentType")
-                == "application/pdf"
-            ):
-                pdf_items.append(item)
-
-        print(f"end {iteration=} contains {len(pdf_items)} PDF items\n")
-        start += limit
-
-    return pdf_items
+# def collection_constructor(zotero_client=None):
+#     my_collections = Collections()
+#     collections = zotero_client.collections()
+#     for collection in collections:
+#         tmp = Collection(
+#             key=collection["data"]["key"],
+#             name=collection["data"]["name"],
+#             number_of_items=collection["meta"]["numItems"],
+#         )
+#         my_collections.add_collection(tmp)
+#     return my_collections
 
 
-def get_pdf_item_from_item_key(zotero_client, item_key: str) -> dict:
-    item = zotero_client.item(item_key)
-    if (
-        item.get("contentType") == "application/pdf"
-        or item.get("links", {}).get("enclosure", {}).get("type")
-        == "application/pdf"
-        or item.get("attachment", {}).get("attachmentType") == "application/pdf"
-    ):
-        return item
-    else:
-        raise ValueError(f"Item with key {item_key} is not a PDF")
+# def get_pdf_items_from_collection_key(
+#     zotero_client, collection_key: str
+# ) -> list:
+#     start = 0
+#     limit = 100
+#     iteration = 1
+#     pdf_items = []
+
+#     while True:
+#         # Retrieve items from the collection
+#         print(
+#             f"{iteration=} - querying {collection_key=} items w/ pagination : {start=} - end {start + limit}"
+#         )
+#         items = zotero_client.collection_items(
+#             collection_key, start=start, limit=limit
+#         )
+#         print(f"{iteration=} - retrieved {len(items)} items")
+#         iteration += 1
+
+#         if not items:
+#             print(f"Finished retrieving items from {collection_key}")
+#             print(f"Total items retrieved: {len(pdf_items)}")
+#             break
+
+#         # Collecting PDF items from the results
+#         for item in items:
+#             if (
+#                 # item.get("data", {}).get("itemType") == "attachment"
+#                 item.get("contentType") == "application/pdf"
+#                 or item.get("links", {}).get("enclosure", {}).get("type")
+#                 == "application/pdf"
+#                 or item.get("attachment", {}).get("attachmentType")
+#                 == "application/pdf"
+#             ):
+#                 pdf_items.append(item)
+
+#         print(f"end {iteration=} contains {len(pdf_items)} PDF items\n")
+#         start += limit
+
+#     return pdf_items
+
+
+# def get_pdf_item_from_item_key(zotero_client, item_key: str) -> dict:
+#     item = zotero_client.item(item_key)
+#     if (
+#         item.get("contentType") == "application/pdf"
+#         or item.get("links", {}).get("enclosure", {}).get("type")
+#         == "application/pdf"
+#         or item.get("attachment", {}).get("attachmentType") == "application/pdf"
+#     ):
+#         return item
+#     else:
+#         raise ValueError(f"Item with key {item_key} is not a PDF")

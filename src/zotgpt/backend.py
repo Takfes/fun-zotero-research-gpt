@@ -1,10 +1,6 @@
 from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-# paths = [path] if isinstance(path, str) else path
-# documents_loaded = []
-# for p in paths:
-
 
 def load_document(path, chunk_size=1000, chunk_overlap=200, metadata=None):
     loader = PyPDFLoader(path)

@@ -38,6 +38,7 @@ dependencies = [
     "langchain-chroma>=0.1.4",
     "streamlit-chat>=0.1.1",
     "tqdm>=4.67.1",
+    "streamlit-aggrid>=1.0.5",
 ]
 
 [project.urls]

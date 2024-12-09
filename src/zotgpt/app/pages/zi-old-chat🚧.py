@@ -5,7 +5,7 @@ from streamlit_chat import message
 
 from zotgpt.embed import EmbeddingsFactory
 from zotgpt.retrieval import Retriever, format_answer
-from zotgpt.storage import VectorStoreFactory
+from zotgpt.vectorstore import VectorStoreFactory
 
 ef = EmbeddingsFactory(
     embeddings_type=os.environ["EMBEDDINGS_TYPE"],

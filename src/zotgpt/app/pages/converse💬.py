@@ -2,11 +2,11 @@ import os
 
 import streamlit as st
 
-from zotgpt.app.utils import initialize_embeddings_and_vector_store
+from zotgpt.app.utils import initialize
 from zotgpt.retrieval import Retriever, format_answer
 
 # # Initialize embeddings and vector store only once
-initialize_embeddings_and_vector_store()
+initialize()
 
 # Initialize session state for chat history and components
 if "chat_answers_history" not in st.session_state:

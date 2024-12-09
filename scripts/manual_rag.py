@@ -16,7 +16,7 @@ from langchain_pinecone import PineconeVectorStore
 from pyprojroot import here
 
 from zotgpt.embed import EmbeddingsFactory
-from zotgpt.storage import VectorStoreFactory
+from zotgpt.vectorstore import VectorStoreFactory
 from zotgpt.zotero import (
     ZoteroItem,
     get_pdf_item_from_item_key,
